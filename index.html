@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dungeons — Restore Energy (Animated Mockup)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap');
+  :root{
+    --gold:#f6a821; --gold-d:#e08a12; --gold-dd:#b35e1a;
+    --cream:#fce6b0; --cream-2:#fbdf9e; --cream-card:#fbeec0;
+    --brown:#7a4a23; --brown-d:#5f3818; --brown-tx:#5b3411;
+    --sub:#a07c46;
+    --tan-border:#e0b06a;
+    --red:#d83a2a; --red-d:#a72718;
+    --green:#46c14e; --green-l:#7be36f; --green-d:#2f9a37; --green-tx:#1c5e1f;
+    --magenta:#e23bd0;
+    --shadow: rgba(60,30,10,.45);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; }
+  body{
+    font-family:"Baloo 2", system-ui, "Segoe UI", Arial, sans-serif; font-weight:800;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(120% 90% at 50% -10%, #6c4bb0 0%, #3b2470 45%, #211243 100%);
+    overflow:hidden;
+  }
+  .stage{ position:relative; width:min(440px,100vw); height:min(900px,100vh); overflow:hidden; }
+  .overlay{ position:absolute; inset:0; background:rgba(20,10,40,.55); opacity:0; }
+  .overlay.show{ animation:fade .18s ease forwards; }
+  @keyframes fade{ to{opacity:1;} }
+
+  .modal{
+    position:absolute; left:50%; top:50%;
+    width:380px; max-width:92vw;
+    transform:translate(-50%,-50%) scale(var(--fit,1));
+    will-change:transform;
+  }
+
+  /* panel */
+  .panel{
+    position:relative;
+    background:linear-gradient(180deg,var(--cream) 0%, var(--cream-2) 100%);
+    border:6px solid var(--brown); border-radius:24px;
+    padding:0 0 14px; overflow:hidden;
+    box-shadow:0 14px 0 var(--brown-d), 0 26px 40px var(--shadow), inset 0 0 0 3px #ffe9b8;
+    transform:scale(.7); opacity:0;
+  }
+  .panel.show{ animation:popPanel .26s cubic-bezier(.18,.85,.25,1) forwards; }
+  @keyframes popPanel{ 0%{opacity:0;transform:scale(.78);}65%{opacity:1;transform:scale(1.03);}100%{opacity:1;transform:scale(1);} }
+
+  /* header ribbon */
+  .ribbon{
+    position:absolute; top:-26px; left:50%;
+    transform:translateX(-50%) translateY(-60px) scale(.7);
+    opacity:0; z-index:6; width:300px; height:62px; will-change:transform;
+  }
+  .ribbon.show{ animation:ribbonDrop .3s cubic-bezier(.2,.85,.25,1) forwards; }
+  @keyframes ribbonDrop{
+    0%{ opacity:0; transform:translateX(-50%) translateY(-60px) scale(.7); }
+    62%{ opacity:1; transform:translateX(-50%) translateY(5px) scale(1.05); }
+    100%{ opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+  }
+  .ribbon .tail{ position:absolute; top:14px; width:46px; height:40px;
+    background:linear-gradient(180deg,var(--gold-d),var(--gold-dd)); border:3px solid var(--brown-d); }
+  .ribbon .tail.l{ left:-10px; clip-path:polygon(0 0,100% 14%,72% 50%,100% 86%,0 100%); }
+  .ribbon .tail.r{ right:-10px; clip-path:polygon(100% 0,0 14%,28% 50%,0 86%,100% 100%); }
+  .ribbon .band{ position:absolute; left:50%; top:0; transform:translateX(-50%);
+    width:262px; height:62px;
+    background:linear-gradient(180deg,#ffc24a 0%, var(--gold) 45%, var(--gold-d) 100%);
+    border:4px solid var(--brown-d); border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 3px 0 #ffe39a, inset 0 -4px 0 rgba(150,70,10,.5); }
+  .ribbon .band span{ color:#fff; font-size:25px; letter-spacing:.5px;
+    -webkit-text-stroke:4px var(--brown-d); paint-order:stroke fill; text-shadow:0 2px 0 var(--brown-d); }
+
+  /* X close */
+  .xbtn{ position:absolute; top:-20px; right:-16px; z-index:7;
+    width:44px; height:44px; border-radius:12px;
+    background:linear-gradient(180deg,#f1604c,var(--red) 55%,var(--red-d));
+    border:3px solid #fff; box-shadow:0 4px 0 var(--red-d), 0 7px 10px rgba(0,0,0,.3);
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:22px; cursor:pointer;
+    transform:scale(0); opacity:0; }
+  .xbtn.show{ animation:popX .2s cubic-bezier(.2,.9,.3,1) .15s forwards; }
+  .xbtn:active{ transform:translateY(3px) scale(.96); box-shadow:0 1px 0 var(--red-d); }
+  @keyframes popX{ 0%{opacity:0;transform:scale(0);}70%{opacity:1;transform:scale(1.12);}100%{opacity:1;transform:scale(1);} }
+
+  /* hero illustration */
+  .hero{
+    position:relative; width:100%; height:172px; overflow:hidden;
+    border-bottom:3px solid #d9a85e;
+    opacity:0; transform:scale(1.06); transform-origin:50% 30%;
+  }
+  .hero.show{ animation:heroIn .34s cubic-bezier(.2,.8,.25,1) forwards; }
+  @keyframes heroIn{ 0%{opacity:0; transform:scale(1.06);} 100%{opacity:1; transform:scale(1);} }
+  .hero svg{ display:block; width:100%; height:100%; }
+
+  /* content */
+  .content{ padding:12px 16px 2px; }
+  .ptitle{ text-align:center; color:var(--brown-tx); font-size:27px; margin:4px 0 2px;
+    opacity:0; transform:translateY(8px); }
+  .ptitle.show{ animation:rise .22s ease-out forwards; }
+  .sub{ text-align:center; color:var(--sub); font-size:17px; margin:12px 0 8px;
+    opacity:0; transform:translateY(8px); }
+  .sub.show{ animation:rise .22s ease-out forwards; }
+  @keyframes rise{ to{opacity:1; transform:none;} }
+
+  /* item rows */
+  .row{
+    display:flex; align-items:center; gap:10px;
+    background:linear-gradient(180deg,#fdf0c8,#f7e3a8);
+    border:3px solid var(--tan-border); border-radius:16px;
+    padding:10px 12px;
+    box-shadow:inset 0 2px 0 #fff7df, 0 3px 0 rgba(180,120,40,.35);
+    opacity:0; transform:translateX(-130%); will-change:transform;
+  }
+  .row.show{ animation:rowIn .3s cubic-bezier(.2,.9,.25,1) forwards; }
+  @keyframes rowIn{ 0%{opacity:0;transform:translateX(-130%);}70%{opacity:1;transform:translateX(2%);}100%{opacity:1;transform:translateX(0);} }
+
+  .item{ position:relative; width:74px; height:64px; flex:0 0 74px; display:flex; align-items:center; justify-content:center; }
+  .item svg{ width:60px; height:60px; }
+  .cnt{ position:absolute; right:0; bottom:-2px; color:var(--brown-tx); font-size:19px;
+    text-shadow:0 1px 0 #fff7df; }
+  .spacer{ flex:1; }
+
+  /* green action button (heavy snappy landing) */
+  .gbtn{
+    position:relative; overflow:hidden; flex:0 0 170px; min-height:62px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    border-radius:14px; cursor:pointer; padding:8px 6px;
+    background:linear-gradient(180deg,var(--green-l) 0%, var(--green) 52%, var(--green-d) 100%);
+    border:3px solid #d8ffd6;
+    box-shadow:0 5px 0 #1f7a26, 0 7px 12px rgba(20,90,30,.3), inset 0 1px 1px rgba(255,255,255,.5);
+    color:#fff; opacity:0; will-change:transform;
+  }
+  .gbtn::before{ content:""; position:absolute; left:6%; right:6%; top:3px; height:38%;
+    border-radius:14px; background:linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,0)); pointer-events:none; }
+  .gbtn .b1{ font-size:22px; display:flex; align-items:center; gap:7px; line-height:1;
+    text-shadow:0 2px 0 var(--green-tx); }
+  .gbtn .b2{ font-size:17px; display:flex; align-items:center; gap:6px; line-height:1;
+    text-shadow:0 1px 0 var(--green-tx); }
+  .gbtn .b1 svg, .gbtn .b2 svg{ width:24px; height:24px; }
+  .gbtn.land{ animation:btnLand .42s cubic-bezier(.3,.65,.2,1) forwards; }
+  @keyframes btnLand{
+    0%   { opacity:0; transform:translateY(-44px) scaleX(.82) scaleY(1.26); }
+    52%  { opacity:1; transform:translateY(0)     scaleX(1.28) scaleY(.7); }
+    68%  { opacity:1; transform:translateY(-7px)  scaleX(.93) scaleY(1.1); }
+    84%  { opacity:1; transform:translateY(0)     scaleX(1.03) scaleY(.97); }
+    100% { opacity:1; transform:translateY(0)     scale(1); }
+  }
+  .gbtn:active{ transform:translateY(3px) scale(.98); box-shadow:0 2px 0 #1f7a26; }
+
+  /* VFX */
+  .spark{ position:absolute; pointer-events:none; z-index:50; background:#ffe169;
+    transform:rotate(45deg); border-radius:1px; box-shadow:0 0 6px #ffd24a;
+    animation:sparkFly var(--d,.4s) cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes sparkFly{ 0%{opacity:1; transform:translate(0,0) rotate(45deg) scale(1);}
+    100%{opacity:0; transform:translate(var(--dx),var(--dy)) rotate(225deg) scale(.2);} }
+  .ring{ position:absolute; pointer-events:none; z-index:49;
+    width:90px; height:50px; margin:-25px 0 0 -45px; border:4px solid #fff3b0; border-radius:14px;
+    opacity:.9; animation:ringPop .42s cubic-bezier(.2,.7,.3,1) forwards; }
+  @keyframes ringPop{ 0%{transform:scale(.4); opacity:.95;} 100%{transform:scale(1.7); opacity:0;} }
+  .glow{ position:absolute; pointer-events:none; z-index:48;
+    width:150px; height:90px; margin:-45px 0 0 -75px; border-radius:50%;
+    background:radial-gradient(circle, rgba(190,255,180,.75), transparent 65%);
+    animation:glowPop .42s ease-out forwards; }
+  @keyframes glowPop{ 0%{opacity:.9; transform:scale(.5);} 100%{opacity:0; transform:scale(1.4);} }
+
+  .replay{ position:absolute; bottom:14px; left:50%; transform:translateX(-50%); z-index:80;
+    display:flex; gap:8px; align-items:center; background:rgba(0,0,0,.45); backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,.25); color:#fff; font-size:14px; padding:9px 16px; border-radius:30px;
+    cursor:pointer; font-family:system-ui,sans-serif; font-weight:700; }
+  .replay:active{ transform:translateX(-50%) scale(.96); }
+  .replay svg{ width:16px; height:16px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation-duration:.001s !important; } }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <div class="ribbon" id="ribbon">
+      <div class="tail l"></div><div class="tail r"></div>
+      <div class="band"><span>Dungeons</span></div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="xbtn" id="xbtn">✕</div>
+      <div class="hero" id="hero">HERO_SCENE</div>
+      <div class="content">
+        <div class="ptitle" id="ptitle">Restore Energy</div>
+
+        <div class="sub" id="sub1">Energy Restored to max</div>
+        <div class="row" data-i="0">
+          <div class="item">POTION_ICON<span class="cnt">x1</span></div>
+          <div class="spacer"></div>
+          <div class="gbtn">
+            <div class="b1">Buy <span class="gemwrap">GEM_ICON</span> 999</div>
+            <div class="b2">(Auto-use)</div>
+          </div>
+        </div>
+
+        <div class="sub" id="sub2">Watch Ad to restore part</div>
+        <div class="row" data-i="1">
+          <div class="item">SHARD_ICON<span class="cnt">x20</span></div>
+          <div class="spacer"></div>
+          <div class="gbtn">
+            <div class="b1">Watch Ad</div>
+            <div class="b2">PLAY_ICON (0/6)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="replay" id="replay">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>
+    </svg> Replay
+  </div>
+</div>
+
+<script>
+/* ---------- shadow-imp builder ---------- */
+function imp(tx,ty,s,flip,opts={}){
+  const f = flip ? -1 : 1;
+  const helmet = opts.helmet ? `
+    <path d="M-15 2 a15 12 0 0 1 30 0 z" fill="#c9d2da" stroke="#8b97a3" stroke-width="1.5"/>
+    <rect x="-16" y="1" width="32" height="5" rx="2" fill="#aab4be"/>
+    <path d="M-13 0 q-12 -4 -16 6 q10 0 16 2 z" fill="#f3f5f7" stroke="#c9d2da" stroke-width="1"/>
+    <path d="M13 0 q12 -4 16 6 q-10 0 -16 2 z" fill="#f3f5f7" stroke="#c9d2da" stroke-width="1"/>` : '';
+  const shield = opts.shield ? `
+    <g transform="translate(20,30)">
+      <path d="M0 -12 L13 -7 L13 6 Q13 16 0 22 Q-13 16 -13 6 L-13 -7 Z" fill="#b5641f" stroke="#7a3f12" stroke-width="2"/>
+      <path d="M0 -12 L13 -7 L13 6 Q13 16 0 22 Z" fill="#d2792b"/>
+      <circle cx="0" cy="3" r="3" fill="#f1c34a"/>
+    </g>` : '';
+  return `<g transform="translate(${tx},${ty}) scale(${s*f},${s})">
+    <path d="M2 40 q24 8 28 -10" stroke="#170f2a" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="0" cy="34" rx="15" ry="18" fill="#241a3a"/>
+    <rect x="-9" y="46" width="6" height="13" rx="3" fill="#170f2a"/>
+    <rect x="3" y="46" width="6" height="13" rx="3" fill="#170f2a"/>
+    <rect x="-17" y="28" width="6" height="17" rx="3" fill="#170f2a" transform="rotate(18 -14 28)"/>
+    <rect x="11" y="28" width="6" height="17" rx="3" fill="#170f2a" transform="rotate(-18 14 28)"/>
+    <polygon points="-10,9 -27,-5 -12,17" fill="#2a1f44"/>
+    <polygon points="10,9 27,-5 12,17" fill="#2a1f44"/>
+    <circle cx="0" cy="8" r="14" fill="#2a1f44"/>
+    <polygon points="-6,-4 -9,-15 -2,-6" fill="#170f2a"/>
+    <polygon points="6,-4 9,-15 2,-6" fill="#170f2a"/>
+    ${helmet}
+    <circle cx="-5" cy="8" r="5" fill="#ff3df0" opacity=".35"/>
+    <circle cx="5" cy="8" r="5" fill="#ff3df0" opacity=".35"/>
+    <circle cx="-5" cy="8" r="2.7" fill="#ff7af6"/>
+    <circle cx="5" cy="8" r="2.7" fill="#ff7af6"/>
+    <path d="M-4 15 L-2.5 18.5 L-1 15 M1 15 L2.5 18.5 L4 15" stroke="#fff" stroke-width="1.3" fill="none" stroke-linejoin="round"/>
+    ${shield}
+  </g>`;
+}
+
+const HERO = `
+<svg viewBox="0 0 380 172" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="cave" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a5f86"/><stop offset="1" stop-color="#1c3450"/>
+    </linearGradient>
+    <radialGradient id="haze" cx="50%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#5a7da6" stop-opacity=".6"/><stop offset="1" stop-color="#1c3450" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="380" height="172" fill="#2a4a6e"/>
+  <rect width="380" height="172" fill="url(#haze)"/>
+  <!-- cave floor -->
+  <path d="M0 120 Q190 100 380 120 L380 172 L0 172 Z" fill="#21405f"/>
+  <path d="M0 132 Q190 116 380 132 L380 172 L0 172 Z" fill="#1a3450"/>
+  <!-- back rocks -->
+  <polygon points="0,80 40,40 70,80" fill="#27496c" opacity=".7"/>
+  <polygon points="320,70 360,30 380,80" fill="#27496c" opacity=".7"/>
+  <!-- dust sparkles -->
+  <g fill="#cfe4ff" opacity=".8">
+    <circle cx="150" cy="40" r="1.6"/><circle cx="250" cy="30" r="1.3"/><circle cx="300" cy="55" r="1.4"/>
+    <circle cx="90" cy="60" r="1.2"/>
+  </g>
+  ${imp(55,86,1.05,false,{helmet:true})}
+  ${imp(150,92,1.0,false,{shield:true})}
+  ${imp(245,86,1.05,true)}
+  ${imp(322,94,1.0,false)}
+  <!-- treasure chest -->
+  <g transform="translate(282,108)">
+    <ellipse cx="0" cy="40" rx="34" ry="6" fill="#000" opacity=".25"/>
+    <rect x="-30" y="6" width="60" height="30" rx="4" fill="#7a4a23" stroke="#4f2f14" stroke-width="2"/>
+    <path d="M-30 8 Q0 -14 30 8 L30 12 L-30 12 Z" fill="#8a5a2a" stroke="#4f2f14" stroke-width="2"/>
+    <rect x="-30" y="16" width="60" height="6" fill="#f1c34a"/>
+    <rect x="-4" y="6" width="8" height="22" fill="#f1c34a" stroke="#c8870f" stroke-width="1"/>
+    <circle cx="0" cy="22" r="4" fill="#caa15a" stroke="#7a5212" stroke-width="1.5"/>
+    <!-- key -->
+    <g transform="translate(-2,20) rotate(-20)">
+      <rect x="0" y="-1.5" width="20" height="3" rx="1.5" fill="#f1c34a" stroke="#c8870f" stroke-width="1"/>
+      <circle cx="22" cy="0" r="5" fill="none" stroke="#f1c34a" stroke-width="3"/>
+      <rect x="2" y="0" width="3" height="5" fill="#f1c34a"/>
+    </g>
+  </g>
+</svg>`;
+
+const POTION = `<svg viewBox="0 0 70 70">
+  <g transform="rotate(-16 33 40)">
+    <rect x="26" y="9" width="14" height="8" rx="2.5" fill="#7a4a23" stroke="#4f2f14" stroke-width="1.5"/>
+    <path d="M25 17 h16 v22 a8 8 0 0 1-16 0 z" fill="#bff06a" stroke="#3a8f2a" stroke-width="2.2"/>
+    <path d="M25 30 h16 v9 a8 8 0 0 1-16 0 z" fill="#5fd23a"/>
+    <ellipse cx="30" cy="24" rx="2.4" ry="5" fill="#eaffc0" opacity=".75"/>
+  </g>
+  <polygon points="44,16 31,38 41,38 33,62 60,32 46,32 55,16" fill="#ffd23a" stroke="#d68a0e" stroke-width="2.2" stroke-linejoin="round"/>
+  <polygon points="44,16 55,16 41,38" fill="#fff0a8" opacity=".7"/>
+</svg>`;
+
+const SHARD = `<svg viewBox="0 0 70 70">
+  <polygon points="40,6 16,40 33,40 26,64 56,26 38,26 48,6" fill="#ffce3a" stroke="#d68a0e" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="40,6 48,6 33,34 25,34" fill="#fff0a8" opacity=".75"/>
+</svg>`;
+
+const GEM = `<svg viewBox="0 0 30 30">
+  <polygon points="9,6 15,3 21,6 24,13 15,26 6,13" fill="#ff5fd8" stroke="#b32fa0" stroke-width="1.6" stroke-linejoin="round"/>
+  <polygon points="15,3 24,13 15,12" fill="#ff9eea" opacity=".8"/>
+  <polygon points="15,3 6,13 15,12" fill="#e040c4" opacity=".7"/>
+  <polygon points="6,13 15,26 15,12" fill="#cf2faa" opacity=".5"/>
+</svg>`;
+
+const PLAY = `<svg viewBox="0 0 30 30" fill="none">
+  <rect x="3" y="7" width="20" height="16" rx="3.5" fill="none" stroke="#fff" stroke-width="2.5"/>
+  <path d="M23 11 l5 -3 v14 l-5 -3 z" fill="#fff"/>
+  <polygon points="11,12 18,15 11,18" fill="#fff"/>
+</svg>`;
+
+/* inject art */
+document.getElementById('hero').innerHTML = HERO;
+document.querySelectorAll('.item').forEach(it=>{
+  it.innerHTML = it.innerHTML.replace('POTION_ICON', POTION).replace('SHARD_ICON', SHARD);
+});
+document.querySelectorAll('.gemwrap').forEach(g=> g.innerHTML = GEM);
+document.querySelectorAll('.b2').forEach(b=>{ b.innerHTML = b.innerHTML.replace('PLAY_ICON', PLAY); });
+
+/* ---------- VFX ---------- */
+const stage=document.getElementById('stage');
+function atCenter(el){ const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect();
+  return { x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2 }; }
+function sparkBurst(el, n=16){
+  const c=atCenter(el);
+  for(let i=0;i<n;i++){
+    const sp=document.createElement('div'); sp.className='spark';
+    const a=Math.random()*Math.PI*2, d=30+Math.random()*54, sz=4+Math.random()*6;
+    sp.style.left=c.x+'px'; sp.style.top=c.y+'px'; sp.style.width=sz+'px'; sp.style.height=sz+'px';
+    sp.style.setProperty('--dx',Math.cos(a)*d+'px'); sp.style.setProperty('--dy',Math.sin(a)*d+'px');
+    sp.style.setProperty('--d',(240+Math.random()*200)+'ms');
+    if(Math.random()<.4){ sp.style.background='#d6ffcf'; sp.style.boxShadow='0 0 6px #8fe87f'; }
+    stage.appendChild(sp); setTimeout(()=>sp.remove(),700);
+  }
+  const ring=document.createElement('div'); ring.className='ring';
+  ring.style.left=c.x+'px'; ring.style.top=c.y+'px'; stage.appendChild(ring); setTimeout(()=>ring.remove(),460);
+  const glow=document.createElement('div'); glow.className='glow';
+  glow.style.left=c.x+'px'; glow.style.top=c.y+'px'; stage.appendChild(glow); setTimeout(()=>glow.remove(),460);
+}
+
+/* ---------- timeline ---------- */
+const overlay=document.getElementById('overlay'), modal=document.getElementById('modal'),
+      panel=document.getElementById('panel'), ribbon=document.getElementById('ribbon'),
+      xbtn=document.getElementById('xbtn'), hero=document.getElementById('hero'),
+      ptitle=document.getElementById('ptitle'), sub1=document.getElementById('sub1'),
+      sub2=document.getElementById('sub2'),
+      rows=[...document.querySelectorAll('.row')], gbtns=[...document.querySelectorAll('.gbtn')];
+
+let timers=[]; const at=(ms,fn)=>timers.push(setTimeout(fn,ms));
+function reset(){
+  timers.forEach(clearTimeout); timers=[];
+  document.querySelectorAll('.spark,.ring,.glow').forEach(n=>n.remove());
+  [overlay,panel,ribbon,xbtn,hero,ptitle,sub1,sub2].forEach(e=>e.classList.remove('show'));
+  rows.forEach(r=>r.classList.remove('show')); gbtns.forEach(b=>b.classList.remove('land'));
+  void modal.offsetWidth;
+}
+function play(){
+  reset();
+  at(0,   ()=>overlay.classList.add('show'));
+  at(120, ()=>panel.classList.add('show'));
+  at(260, ()=>hero.classList.add('show'));
+  at(360, ()=>{ ribbon.classList.add('show'); sparkBurst(ribbon,12); });
+  at(420, ()=>xbtn.classList.add('show'));
+  at(560, ()=>ptitle.classList.add('show'));
+
+  // rows slide in left->right, each green button HEAVY-lands ~240ms after its card (same as file 1)
+  at(660, ()=>sub1.classList.add('show'));
+  at(740, ()=>rows[0].classList.add('show'));
+  at(980, ()=>{ gbtns[0].classList.add('land'); setTimeout(()=>sparkBurst(gbtns[0],16),200); });
+
+  at(1080,()=>sub2.classList.add('show'));
+  at(1160,()=>rows[1].classList.add('show'));
+  at(1400,()=>{ gbtns[1].classList.add('land'); setTimeout(()=>sparkBurst(gbtns[1],16),200); });
+}
+
+document.getElementById('replay').addEventListener('click', play);
+function fit(){
+  modal.style.setProperty('--fit',1);
+  const h=modal.offsetHeight+36, w=modal.offsetWidth;
+  const s=Math.min(1,(stage.clientHeight-16)/h,(stage.clientWidth-8)/w);
+  modal.style.setProperty('--fit', s.toFixed(3));
+}
+window.addEventListener('resize', fit);
+window.addEventListener('load', ()=>{ fit(); setTimeout(play,250); });
+</script>
+</body>
+</html>
